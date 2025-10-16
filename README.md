@@ -1,6 +1,6 @@
 
 # fastapi
-A repo to familiarize myself with FastAPI framework and best practices
+A repo to familiarize myself with FastAPI framework and best practices. My teachers are Claude Code and Cursor.
 
 ### Local development with Docker 
 
