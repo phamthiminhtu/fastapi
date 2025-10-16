@@ -42,3 +42,11 @@ A repo to familiarize myself with FastAPI framework and best practices
 ```
 uvicorn main:app --reload
 ```
+
+## Tests
+- Get user access_token:
+```
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=engineer&password=engineer123" 2>/dev/null
+```
