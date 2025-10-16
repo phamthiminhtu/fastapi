@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import Optional
 from datetime import datetime
-from dependencies.auth import require_data_engineer, get_current_user
-from models.schemas import (
-    Pipeline, PipelineListResponse, PipelineActionResponse, 
+from app.dependencies.auth import require_data_engineer, get_current_user
+from app.core.database import get_db
+from app.models.schemas import (
+    Pipeline as PipelineSchema, PipelineListResponse, PipelineActionResponse,
     ErrorResponse, PipelineStatus
 )
+from app.models.db_models import Pipeline as PipelineModel
 
 router = APIRouter(
     prefix="/api/v2/pipelines",
@@ -18,31 +22,6 @@ router = APIRouter(
     }
 )
 
-# Convert our data to match the models
-def get_pipeline_data():
-    return [
-        Pipeline(
-            id=1, 
-            name="customer_etl", 
-            status=PipelineStatus.RUNNING,
-            created_at=datetime(2024, 1, 15, 10, 0, 0),
-            last_run=datetime(2024, 1, 20, 14, 30, 0),
-            success_rate=98.5,
-            records_processed=150000,
-            tags=["customer", "daily"]
-        ),
-        Pipeline(
-            id=2, 
-            name="sales_analytics", 
-            status=PipelineStatus.STOPPED,
-            created_at=datetime(2024, 1, 10, 9, 0, 0),
-            last_run=datetime(2024, 1, 19, 23, 45, 0),
-            success_rate=95.2,
-            records_processed=89000,
-            tags=["sales", "hourly"]
-        ),
-    ]
-
 @router.get(
     "/",
     response_model=PipelineListResponse,
@@ -50,52 +29,62 @@ def get_pipeline_data():
     summary="List all pipelines",
     description="Retrieve all data pipelines with optional filtering"
 )
-def list_pipelines_v2(
+async def list_pipelines_v2(
     tag: Optional[str] = None,
     status_filter: Optional[PipelineStatus] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """Enhanced pipeline list with filtering and structured response"""
-    pipelines = get_pipeline_data()
-    
+    query = select(PipelineModel)
+
     # Apply filters
-    if tag:
-        pipelines = [p for p in pipelines if tag in p.tags]
-    
     if status_filter:
-        pipelines = [p for p in pipelines if p.status == status_filter]
-    
+        query = query.where(PipelineModel.status == status_filter)
+
+    result = await db.execute(query)
+    pipelines = result.scalars().all()
+
+    # Filter by tag (array operation)
+    if tag:
+        pipelines = [p for p in pipelines if p.tags and tag in p.tags]
+
+    # Convert to schema
+    pipeline_schemas = [PipelineSchema.model_validate(p) for p in pipelines]
+
     return PipelineListResponse(
-        pipelines=pipelines,
-        total_count=len(pipelines),
+        pipelines=pipeline_schemas,
+        total_count=len(pipeline_schemas),
         filters_applied={"tag": tag, "status": status_filter}
     )
 
 @router.get(
     "/{pipeline_id}",
-    response_model=Pipeline,
+    response_model=PipelineSchema,
     responses={
-        200: {"model": Pipeline, "description": "Pipeline details"},
+        200: {"model": PipelineSchema, "description": "Pipeline details"},
         404: {"model": ErrorResponse, "description": "Pipeline not found"}
     },
     summary="Get pipeline by ID",
     description="Retrieve detailed information about a specific pipeline"
 )
-def get_pipeline_v2(
-    pipeline_id: int, 
-    current_user: dict = Depends(get_current_user)
+async def get_pipeline_v2(
+    pipeline_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """Get detailed pipeline information"""
-    pipelines = get_pipeline_data()
-    pipeline = next((p for p in pipelines if p.id == pipeline_id), None)
-    
+    query = select(PipelineModel).where(PipelineModel.id == pipeline_id)
+    result = await db.execute(query)
+    pipeline = result.scalar_one_or_none()
+
     if not pipeline:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Pipeline {pipeline_id} not found"
         )
-    
-    return pipeline
+
+    return PipelineSchema.model_validate(pipeline)
 
 @router.post(
     "/{pipeline_id}/start",
@@ -104,22 +93,29 @@ def get_pipeline_v2(
     summary="Start pipeline",
     description="Start a specific pipeline with optional priority setting"
 )
-def start_pipeline_v2(
+async def start_pipeline_v2(
     pipeline_id: int,
     priority: str = "normal",
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """Start pipeline with enhanced response"""
     # Check if pipeline exists
-    pipelines = get_pipeline_data()
-    pipeline = next((p for p in pipelines if p.id == pipeline_id), None)
-    
+    query = select(PipelineModel).where(PipelineModel.id == pipeline_id)
+    result = await db.execute(query)
+    pipeline = result.scalar_one_or_none()
+
     if not pipeline:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Pipeline {pipeline_id} not found"
         )
-    
+
+    # Update pipeline status
+    pipeline.status = PipelineStatus.RUNNING
+    pipeline.last_run = datetime.now()
+    await db.commit()
+
     return PipelineActionResponse(
         message=f"Pipeline {pipeline_id} started with {priority} priority",
         pipeline_id=pipeline_id,
