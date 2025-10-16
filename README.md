@@ -1,6 +1,44 @@
 
 # fastapi
+
 A repo to familiarize myself with FastAPI framework and best practices. My teachers are Claude Code and Cursor.
+
+### Key learning points
+
+#### Authentication flow
+```
+Login 
+-> Verify Password 
+-> Create JWT 
+-> Return Token
+
+# 2 layers of protection: JWT and DB
+Protected Request 
+-> Decode JWT 
+-> Check Cache 
+-> Query DB (if needed) 
+-> Verify Active 
+-> Allow Access
+```
+
+#### JWT security
+How JWT works, key points:
+- Signature = HMAC_SHA256(Header + Payload, Secret_Key). How access token expiration works.
+- Can't forge without server secret 
+- Can't tamper without breaking signature 
+- Expires automatically 
+
+#### Caching strategy
+```
+Request 
+-> Check Redis 
+-> Cache Hit? Use it! (fast)
+-> Cache Miss? Query DB 
+-> Store in Redis (slower first time, fast after)
+```
+#### Environment configuration with Pydantic
+
+Defaults in config.py -> Overridden by .env -> Overridden by system env vars -> Used via Pydantic settings object.
 
 ### Local development with Docker 
 
