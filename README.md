@@ -26,7 +26,11 @@ A repo to familiarize myself with FastAPI framework and best practices
    python scripts/seed_data.py
    ```
 
-### Build local Docker image
+### Build an push docker image
+- Script:
+```
+    ./scripts/build-and-push.sh
+```
 - CLI:
 ```
     docker build -t fastapi-app:latest ~/workspace/fast-api-app
