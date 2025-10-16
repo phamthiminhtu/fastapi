@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.routers import pipelines, monitoring, jobs
+from app.routers import pipelines, monitoring, jobs, auth
 from app.middleware.request_id import request_id_middleware
 from app.middleware.timing import timing_middleware
 from app.core.database import init_db, close_db
@@ -46,6 +46,7 @@ app.middleware("http")(request_id_middleware)
 app.middleware("http")(timing_middleware)
 
 # Include routers with proper organization
+app.include_router(auth.router)
 app.include_router(pipelines.router)
 app.include_router(monitoring.router)
 app.include_router(jobs.router)

@@ -9,7 +9,7 @@ from app.models.schemas import (
     Pipeline as PipelineSchema, PipelineListResponse, PipelineActionResponse,
     ErrorResponse, PipelineStatus
 )
-from app.models.db_models import Pipeline as PipelineModel
+from app.models.db_models import Pipeline as PipelineModel, User
 
 router = APIRouter(
     prefix="/api/v2/pipelines",
@@ -32,7 +32,7 @@ router = APIRouter(
 async def list_pipelines_v2(
     tag: Optional[str] = None,
     status_filter: Optional[PipelineStatus] = None,
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Enhanced pipeline list with filtering and structured response"""
@@ -70,7 +70,7 @@ async def list_pipelines_v2(
 )
 async def get_pipeline_v2(
     pipeline_id: int,
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get detailed pipeline information"""
@@ -96,7 +96,7 @@ async def get_pipeline_v2(
 async def start_pipeline_v2(
     pipeline_id: int,
     priority: str = "normal",
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Start pipeline with enhanced response"""
@@ -120,5 +120,5 @@ async def start_pipeline_v2(
         message=f"Pipeline {pipeline_id} started with {priority} priority",
         pipeline_id=pipeline_id,
         status=PipelineStatus.RUNNING,
-        performed_by=current_user["username"]
+        performed_by=current_user.username
     )
