@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     secret_key: str = "your-secret-key-change-in-production"
     access_token_expire_minutes: int = 30
 
+    # Redis Cache
+    redis_url: str = "redis://localhost:6379/0"
+    cache_enabled: bool = True
+    cache_ttl_seconds: int = 300  # 5 minutes
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
