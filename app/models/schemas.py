@@ -1,7 +1,34 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from enum import Enum
+
+# ===== Authentication Schemas =====
+
+class Token(BaseModel):
+    """JWT token response"""
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    """Token payload data"""
+    username: Optional[str] = None
+    role: Optional[str] = None
+
+
+class UserResponse(BaseModel):
+    """User information response"""
+    id: int
+    username: str
+    email: str
+    role: str
+    is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+# ===== Pipeline Schemas =====
 
 class PipelineStatus(str, Enum):
     RUNNING = "running"

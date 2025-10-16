@@ -11,6 +11,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.config import settings
+from app.core.security import get_password_hash
 from app.models.db_models import Pipeline, User
 from app.models.schemas import PipelineStatus
 
@@ -66,21 +67,21 @@ async def seed_data():
             User(
                 username="admin",
                 email="admin@example.com",
-                hashed_password="hashed_admin_password",  # In production, use proper password hashing
+                hashed_password=get_password_hash("admin123"),  # Password: admin123
                 role="admin",
                 is_active=1
             ),
             User(
                 username="engineer",
                 email="engineer@example.com",
-                hashed_password="hashed_engineer_password",
+                hashed_password=get_password_hash("engineer123"),  # Password: engineer123
                 role="data_engineer",
                 is_active=1
             ),
             User(
                 username="user",
                 email="user@example.com",
-                hashed_password="hashed_user_password",
+                hashed_password=get_password_hash("user123"),  # Password: user123
                 role="user",
                 is_active=1
             ),
