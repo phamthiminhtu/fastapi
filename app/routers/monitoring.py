@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from datetime import datetime
-from dependencies.auth import get_current_user, require_admin
-from models.schemas import HealthResponse, MetricsResponse, ErrorResponse
+from app.dependencies.auth import get_current_user, require_admin
+from app.models.schemas import HealthResponse, MetricsResponse, ErrorResponse
 
 router = APIRouter(
     prefix="/api/v1/monitoring",
