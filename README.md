@@ -5,6 +5,9 @@ A repo to familiarize myself with FastAPI framework and best practices. My teach
 
 ### Key learning points
 
+#### Key FastAPI components
+Routers, Dependencies, Middleware, Models.
+
 #### Authentication flow
 ```
 Login 
