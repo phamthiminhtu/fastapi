@@ -1,5 +1,5 @@
 
-# fastapi
+# learning-fastapi
 
 A repo to familiarize myself with FastAPI framework and best practices. My teachers are Claude Code and Cursor.
 
